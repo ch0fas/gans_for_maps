@@ -21,6 +21,8 @@ dependencies = [
     "pip",
     "python-dotenv",
     "ruff",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
     "tqdm",
     "typer",
 ]
