@@ -1,91 +1,50 @@
-import os
 import torch
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
 from PIL import Image
-import numpy as np
-from torch.utils.data import Dataset, DataLoader
-from torchvision.utils import save_image
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+import os
 
-############## Augmentations ###############
-both_transform = A.Compose(
-    [A.Resize(width=256, height=256),], additional_targets={"image0": "image"},
+# Directory
+work_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(work_dir, "../data/raw/satellite/")
+
+# Create directory
+os.makedirs(data_dir, exist_ok=True)
+
+# Transformation: from PIL (image) to Tensor
+transform = transforms.Compose([
+    transforms.ToTensor(),  
+])
+
+# Load EuroSAT RGB dataset
+dataset = datasets.EuroSAT(
+    root="data",                    # Folder to download ENTIRE dataset
+    transform=transform,
+    download=True
 )
 
-transform_only_input = A.Compose(
-    [
-        A.HorizontalFlip(p=0.5),
-        A.ColorJitter(p=0.2),
-        A.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], max_pixel_value=255.0,),
-        ToTensorV2(),
-    ]
-)
+# Filter images from dataset. Keep certain images from certain classes
+classes_to_include = ["Forest", "Pasture", "Residential", "River", "Highway", "PermanentCrop"]
+class_to_idx = {v: k for k, v in dataset.class_to_idx.items()}
 
-transform_only_mask = A.Compose(
-    [
-        A.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], max_pixel_value=255.0,),
-        ToTensorV2(),
-    ]
-)
+# Max images per class
+max_per_class = 100  
 
-class Satellite2Map_Data(Dataset):
-    def __init__(self,root):
-        self.root = root
-        list_files = os.listdir(self.root)
-        #### Removing '.ipynb_checkpoints' from the list
-        list_files.remove('.ipynb_checkpoints')
-        self.n_samples = list_files
-        
-            
-    
-    def __len__(self):
-        return len(self.n_samples)
-    
-    def __getitem__(self,idx):
-        try:
-            if torch.is_tensor(idx):
-                idx = idx.tolist()
-            image_name = self.n_samples[idx]
-            #print(self.n_samples)
-            image_path = os.path.join(self.root,image_name)
-            image = np.asarray(Image.open(image_path).convert('RGB'))
-            height, width,_ = image.shape
-            width_cutoff = width // 2
-            satellite_image = image[:, :width_cutoff,:]
-            map_image = image[:, width_cutoff:,:]
+# Store images based on index
+selected_indices = []
+class_counts = {c: 0 for c in classes_to_include}
 
-            augmentations = both_transform(image=satellite_image, image0=map_image)
-            input_image = augmentations["image"]
-            target_image = augmentations["image0"]
+for i, (_, label) in enumerate(dataset):
+    class_name = dataset.classes[label]
+    if class_name in classes_to_include and class_counts[class_name] < max_per_class:
+        selected_indices.append(i)
+        class_counts[class_name] += 1
 
-            satellite_image = transform_only_input(image=input_image)["image"]
-            map_image = transform_only_mask(image=target_image)["image"]
-            # PIL_image = Image.fromarray(numpy_image.astype('uint8'), 'RGB')
-            # satellite_image = Image.fromarray(satellite_image.astype('uint8'),'RGB')
-            # map_image = Image.fromarray(map_image.astype('uint8'),'RGB')
+# Save images in the same folder
+for i, idx in enumerate(selected_indices):
+    img, _ = dataset[idx]
+    img = transforms.ToPILImage()(img)
+    img.save(os.path.join(data_dir, f"tile_{i:05d}.png"))
 
-            # if self.transform!=None:
-            #     satellite_image = self.transform(satellite_image)
-            #     map_image = self.transform(map_image)
-
-            return (satellite_image, map_image)
-        except:
-            if torch.is_tensor(idx):
-                idx = idx.tolist()
-            image_name = self.n_samples[idx]
-            #print(self.n_samples)
-            image_path = os.path.join(self.root,image_name)
-            print(image_path)
-            pass
-    
-    
-            
-if __name__=="__main__":
-    dataset = Satellite2Map_Data("./maps/train")
-    loader = DataLoader(dataset, batch_size=5)
-    for x,y in loader:
-        print("X Shape :-",x.shape)
-        print("Y Shape :-",y.shape)
-        save_image(x,"satellite.png")
-        save_image(y,"map.png")
-        break            
+print(f"Saved {len(selected_indices)} images to {data_dir}")
+print("Images per class:", class_counts)
