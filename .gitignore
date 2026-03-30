@@ -1,6 +1,8 @@
 # Directories
-data/eurosat/
-data/raw/
+data/raw/eurosat/
+data/raw/oam_interrupted/
+data/raw/satellite/
+data/raw/sentinel/
 
 # Env
 .env
