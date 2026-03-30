@@ -1,2 +1,6 @@
 # Directory
 data/eurosat/
+data/raw/
+
+# Env
+.env
