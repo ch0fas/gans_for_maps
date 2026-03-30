@@ -14,14 +14,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 OUTPUT_DIR = "./data/raw/oam"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-TILE_SIZE    = 256    # Tiles of 256px
-TILE_STRIDE  = 128    # Shifts tile every 64px, allowing overlap
+MAX_TILES_PER_SCENE = 150   # Max tiles per scene
+TILE_SIZE    = 256          # Tiles of 256px
+TILE_STRIDE  = 128          # Shifts tile every 128px, allowing overlap
 
 # Set a max of 4096px per scene
 MAX_SCENE_PX = 4096   
 
-# MAx Ground Sample Distance (GSD) in meters
-MAX_GSD_METERS = 1.0
+# Max and Min Ground Sample Distance (GSD) in meters
+MAX_GSD_METERS = 50
+MIN_GSD_METERS = 0.1
+
 
 # Bounding boxes for OAM search — radius of 5km, since OAM takes closer pictures
 # [lon_min, lat_min, lon_max, lat_max]
@@ -66,8 +69,16 @@ def search_oam(bbox, max_gsd=MAX_GSD_METERS, limit=20):
     filtered = []
     for item in results:
         gsd = item.get("gsd")          # meters/pixel, may be None
-        if gsd is not None and gsd > max_gsd:
+        
+        if gsd is None:
             continue
+
+        if gsd > max_gsd: 
+            continue
+
+        if gsd < MIN_GSD_METERS:
+            continue
+
         filtered.append(item)
 
     filtered.sort(key=lambda x: x.get("gsd") or 999)
@@ -179,6 +190,11 @@ for city_name, bbox in CITIES.items():
 
         n_saved = 0
         for row, col, tile in tile_array(rgb, TILE_SIZE, TILE_STRIDE):
+
+            # Limit tiles per scene
+            if n_saved >= MAX_TILES_PER_SCENE:   
+                break
+
             safe_title = title.replace("/", "_").replace(" ", "_")[:60]
             fname = f"{city_name}_{safe_title}_r{row:04d}_c{col:04d}.png"
             Image.fromarray(tile, mode="RGB").save(os.path.join(OUTPUT_DIR, fname))
