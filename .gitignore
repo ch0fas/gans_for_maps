@@ -3,6 +3,7 @@ data/raw/eurosat/
 data/raw/oam_interrupted/
 data/raw/satellite/
 data/raw/sentinel/
+data/raw/oam/
 
 # Env
 .env
