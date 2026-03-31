@@ -4,6 +4,7 @@ data/raw/oam_interrupted/
 data/raw/satellite/
 data/raw/sentinel/
 data/raw/oam/
+data/raw/google_maps/
 
 # Env
 .env
