@@ -16,6 +16,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 dependencies = [
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "dominate>=2.9.1",
     "loguru",
     "mkdocs",
     "pillow>=12.1.1",
@@ -24,12 +27,11 @@ dependencies = [
     "python-dotenv",
     "rasterio>=1.4.4",
     "ruff",
-    "s3fs>=2026.3.0",
+    "s3fs",
     "sentinelsat>=1.2.1",
-    "torch>=2.5.1",
-    "torchvision>=0.20.1",
     "tqdm",
     "typer",
+    "wandb>=0.25.1",
 ]
 requires-python = "~=3.11.0"
 
@@ -46,3 +48,13 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["gans_for_maps"]
 force-sort-within-sections = true
 
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
