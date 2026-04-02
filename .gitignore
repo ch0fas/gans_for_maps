@@ -5,6 +5,7 @@ data/raw/satellite/
 data/raw/sentinel/
 data/raw/oam/
 data/raw/google_maps/
+data/raw/gl_imgs
 
 # Env
 .env
