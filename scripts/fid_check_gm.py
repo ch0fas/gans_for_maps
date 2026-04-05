@@ -8,7 +8,6 @@ from pytorch_fid import fid_score
 import numpy as np
 from scipy import linalg
 
-
 # Config
 REAL_DIR = "data/raw/styles_google"
 INPUT_DIR = "data/raw/google_maps"
