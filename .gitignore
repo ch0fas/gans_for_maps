@@ -6,6 +6,8 @@ data/raw/sentinel/
 data/raw/oam/
 data/raw/google_maps/
 data/raw/gl_imgs
+data/processed/
+data/tests/
 
 # Env
 .env
